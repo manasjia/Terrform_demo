@@ -1,7 +1,3 @@
-provider "aws" {
-    region = "us-east-1"
-     
-  }
 
   resource "aws_vpc" "my_vpc" {
     cidr_block = "10.0.0.0/16"
@@ -58,10 +54,11 @@ provider "aws" {
     }
     
   }
+ 
   resource "aws_instance" "my-instance1" {
     ami = "ami-0c7217cdde317cfec"
     instance_type = "t2.micro"
-    key_name = file("C:\\Users\\manas\\Desktop\\New-demo-keys.pem")
+    #key_name =file(aws_key_pair.mykey.public_key)
     #security_groups = aws_security_group.my_sg.id
     vpc_security_group_ids = [aws_security_group.my_sg.id]
     subnet_id = aws_subnet.my_sub1.id
