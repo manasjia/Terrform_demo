@@ -92,3 +92,53 @@ resource "aws_s3_bucket" "my_s3_bucket" {
     bucket = "manas-terraform-pract12"
   
 }
+
+
+// alb 
+
+resource "aws_lb" "myalb" {
+
+   
+    internal = false
+    load_balancer_type = "application"
+    subnets = [aws_subnet.mysubnet1.id, aws_subnet.mysubnet2.id]
+    security_groups = [aws_security_group.myswg.id]
+    
+    }
+resource "aws_lb_target_group" "mylbtg" {
+    port = 80
+    protocol = "HTTP"
+    vpc_id = aws_vpc.my_vpc.id
+    health_check {
+    path = "/"
+    port = "traffic-port"
+  }
+  
+}
+resource "aws_lb_target_group_attachment" "mytgA1" {
+  target_group_arn = aws_lb_target_group.mylbtg.arn
+  target_id = aws_instance.webserver1.id
+  port = 80
+  
+}
+
+resource "aws_lb_target_group_attachment" "mytgA2" {
+  target_group_arn = aws_lb_target_group.mylbtg.arn
+  target_id = aws_instance.webserver2.id
+  port = 80
+}
+resource "aws_lb_listener" "name" {
+    load_balancer_arn = aws_lb.myalb.arn
+     port              = 80
+     protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = aws_lb_target_group.mylbtg.arn
+    type             = "forward"
+  }
+}
+output "loadbalancerdns" {
+  value = aws_lb.myalb.dns_name
+}
+  
+      
