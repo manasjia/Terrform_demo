@@ -1,67 +1,94 @@
+resource "aws_vpc" "my_vpc" {
+    cidr_block = var.cidr
+}
 
-  resource "aws_vpc" "my_vpc" {
-    cidr_block = "10.0.0.0/16"
-  }
-
-  resource "aws_subnet" "my_sub1" {
+resource "aws_subnet" "mysubnet1" {
+    vpc_id = aws_vpc.my_vpc.id
     cidr_block = "10.0.0.0/24"
-    vpc_id = aws_vpc.my_vpc.id
     availability_zone = "us-east-1a"
-    tags={
-        Name= "My_Sub1"
-    }
-    
-  }
+    map_public_ip_on_launch = true
+}
 
-
-  resource "aws_subnet" "my_sub2" {
+resource "aws_subnet" "mysubnet2" {
+    vpc_id = aws_vpc.my_vpc.id
     cidr_block = "10.0.1.0/24"
-    vpc_id = aws_vpc.my_vpc.id
     availability_zone = "us-east-1b"
-    tags={
-        Name= "My_Sub2"
-    }
-    
-  }
-
-  resource "aws_security_group" "my_sg" {
+    map_public_ip_on_launch = true
+  
+}
+resource "aws_internet_gateway" "my_igw" {
     vpc_id = aws_vpc.my_vpc.id
-    ingress{
-        description = " for SSH"
+    
+  
+}
+resource "aws_route_table" "Myrt" {
+    vpc_id = aws_vpc.my_vpc.id
+    route{
+        cidr_block="0.0.0.0/0"
+        gateway_id = aws_internet_gateway.my_igw.id
+    }
+  
+}
+resource "aws_route_table_association" "myartA1" {
+    route_table_id = aws_route_table.Myrt.id
+    subnet_id = aws_subnet.mysubnet1.id
+    
+  
+}
+resource "aws_route_table_association" "myartA2" {
+    route_table_id = aws_route_table.Myrt.id
+    subnet_id = aws_subnet.mysubnet2.id
+    
+  
+}
+resource "aws_security_group" "myswg" {
+    vpc_id = aws_vpc.my_vpc.id
+
+    ingress {
+        description = "ssh"
         to_port = 22
         from_port = 22
         protocol = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
-    
-    ingress {
-        description = "Fot http"
+   ingress {
+        description = "HTTP"
         to_port = 80
         from_port = 80
         protocol = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
-
-    egress {
-        from_port = 0
-        to_port = 0
-        protocol = "-1"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    tags = {
-       Name= "Mysg"
-    }
-    
+  egress {
+    to_port = 0
+    from_port = 0
+     protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
- 
-  resource "aws_instance" "my-instance1" {
-    ami = "ami-0c7217cdde317cfec"
-    instance_type = "t2.micro"
-    #key_name =file(aws_key_pair.mykey.public_key)
-    #security_groups = aws_security_group.my_sg.id
-    vpc_security_group_ids = [aws_security_group.my_sg.id]
-    subnet_id = aws_subnet.my_sub1.id
-    
+
+  tags = {
+    Name = "Web-sg"
   }
   
+}
+
+resource "aws_instance" "webserver1" {
+    ami = "ami-0c7217cdde317cfec"
+    instance_type = "t2.micro"
+    subnet_id = aws_subnet.mysubnet1.id
+    vpc_security_group_ids = [aws_security_group.myswg.id]
+    user_data = base64encode(file("userdata.sh"))
+  
+}
+
+resource "aws_instance" "webserver2" {
+    ami = "ami-0c7217cdde317cfec"
+    instance_type = "t2.micro"
+    subnet_id = aws_subnet.mysubnet2.id
+    vpc_security_group_ids = [aws_security_group.myswg.id]
+    user_data = base64encode(file("userdata1.sh"))
+  
+}
+resource "aws_s3_bucket" "my_s3_bucket" {
+    bucket = "manas-terraform-pract12"
+  
+}
