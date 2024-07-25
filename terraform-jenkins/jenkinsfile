@@ -1,5 +1,11 @@
 pipeline{
     agent any
+    environment {
+        AWS_ACCESS_KEY_ID     = credentials('my-aws-credentials-id')  // The ID you gave to the credentials
+        AWS_SECRET_ACCESS_KEY = credentials('my-aws-credentials-id')  // The same ID here
+        AWS_REGION            = 'us-east-1'  // Specify your AWS region
+    }
+    
     stages{
         stage('checkout from GIT'){
             steps{
